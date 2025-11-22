@@ -1,12 +1,13 @@
-import 'package:neuralfit_frontend/dto/app_user_info.dart';
+import 'package:neuralfit_frontend/model/app_user_info.dart';
 import 'package:neuralfit_frontend/dto/login_dto.dart';
 import 'package:dio/dio.dart';
 import 'package:neuralfit_frontend/exception/api_exception.dart';
+import 'package:neuralfit_frontend/model/patient_info.dart';
 
-class UserApi {
+class UserRepository {
   final Dio dio;
 
-  UserApi(this.dio);
+  UserRepository(this.dio);
 
   Future<LoginResponse> login(LoginRequest request) async {
     try {
@@ -34,6 +35,41 @@ class UserApi {
       throw _handleApiException(e);
     } catch (e) {
       print('/user/me unknown error: $e');
+      throw _handleUnknownException(e);
+    }
+  }
+
+  Future<String> getInviteCode(String accessToken) async {
+    try {
+      final response = await dio.post(
+        '/user/connection/generate',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      );
+      print('/user/connection/generate ${response.data}');
+      return response.data['key'];
+    } on DioException catch (e) {
+      print('/user/connection/generate error : ${e.response?.data} $e');
+      throw _handleApiException(e);
+    } catch (e) {
+      print('/user/connection/generate unknown error: $e');
+      throw _handleUnknownException(e);
+    }
+  }
+
+  Future<List<PatientInfo>> getPatients(String accessToken) async {
+    try {
+      final response = await dio.get(
+        '/user/my-patients',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      );
+      print('/user/my-patients ${response.data}');
+      return (response.data as List)
+          .map((patient) => PatientInfo.fromJson(patient))
+          .toList();
+    } on DioException catch (e) {
+      throw _handleApiException(e);
+    } catch (e) {
+      print('/user/my-patients unknown error: $e');
       throw _handleUnknownException(e);
     }
   }

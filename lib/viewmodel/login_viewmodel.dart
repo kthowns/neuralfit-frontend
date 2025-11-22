@@ -1,14 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:neuralfit_frontend/api/api.dart';
+import 'package:neuralfit_frontend/api/user_repository.dart';
 import 'package:neuralfit_frontend/dto/login_dto.dart';
 import 'package:neuralfit_frontend/exception/api_exception.dart';
 import 'package:neuralfit_frontend/viewmodel/provider.dart';
 
 class LoginViewmodel extends StateNotifier<LoginViewmodelState> {
-  final UserApi _userApi;
+  final UserRepository _userRepository;
   final Ref ref;
 
-  LoginViewmodel(this._userApi, this.ref) : super(LoginViewmodelState());
+  LoginViewmodel(this._userRepository, this.ref) : super(LoginViewmodelState());
 
   Future<void> login() async {
     state = state.copyWith(isLoginButtonEnabled: false, isLoading: true);
@@ -16,8 +16,10 @@ class LoginViewmodel extends StateNotifier<LoginViewmodelState> {
     final authState = ref.read(authStateNotifierProvider.notifier);
 
     try {
-      final loginResponse = await _userApi.login(request);
-      final userInfo = await _userApi.getUserInfo(loginResponse.accessToken);
+      final loginResponse = await _userRepository.login(request);
+      final userInfo = await _userRepository.getUserInfo(
+        loginResponse.accessToken,
+      );
       state = state.copyWith(errorMessage: '', isLoading: false);
 
       authState.setLoginState(

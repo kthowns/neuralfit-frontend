@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:neuralfit_frontend/view/login_screen.dart';
-import 'package:neuralfit_frontend/view/patient_main_screen.dart';
-import 'package:neuralfit_frontend/view/therapist_main_screen.dart';
+import 'package:neuralfit_frontend/view/screens/login_screen.dart';
+import 'package:neuralfit_frontend/view/screens/patient_main_screen.dart';
+import 'package:neuralfit_frontend/view/screens/therapist_main_screen.dart';
 
 class InitialScreen extends StatefulWidget {
   const InitialScreen({super.key});
@@ -39,7 +38,7 @@ class _InitialScreenState extends State<InitialScreen> {
           } else if (isTherapist) {
             return const TherapistMainScreen();
           } else {
-            return const ProviderScope(child: LoginScreen());
+            return const LoginScreen();
           }
         },
       ),
