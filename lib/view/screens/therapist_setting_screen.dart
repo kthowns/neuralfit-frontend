@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
+import 'package:neuralfit_frontend/view/screens/initial_screen.dart';
 import 'package:neuralfit_frontend/viewmodel/provider.dart'; // 클립보드 복사를 위해 필요
 
 // 🚨 주의: 이 위젯은 BottomNavigationBar를 포함해서는 안 됩니다.
@@ -16,6 +17,7 @@ class TherapistSettingScreen extends ConsumerWidget {
     final therapistCodeViewModel = ref.read(
       therapistCodeViewModelProvider.notifier,
     );
+    final authStateNotifier = ref.read(authStateNotifierProvider.notifier);
 
     return Scaffold(
       appBar: AppBar(title: const Text('설정')),
@@ -50,7 +52,9 @@ class TherapistSettingScreen extends ConsumerWidget {
                   const Text('현재 초대 코드:', style: TextStyle(fontSize: 16)),
                   SelectableText(
                     // 코드를 길게 눌러 선택할 수 있게 함
-                    therapistCodeState.code,
+                    therapistCodeState.code.isNotEmpty
+                        ? therapistCodeState.code
+                        : "...",
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
@@ -116,7 +120,14 @@ class TherapistSettingScreen extends ConsumerWidget {
             ListTile(
               title: const Text('로그아웃'),
               trailing: const Icon(Icons.exit_to_app, size: 16),
-              onTap: () {},
+              onTap: () {
+                authStateNotifier.logout();
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => InitialScreen()),
+                  (route) => false,
+                );
+              },
             ),
           ],
         ),
