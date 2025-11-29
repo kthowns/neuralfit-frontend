@@ -5,6 +5,7 @@ import 'package:neuralfit_frontend/view/screens/therapist_appointment_list.dart'
 import 'package:neuralfit_frontend/view/screens/therapist_medical_record_list.dart';
 import 'package:neuralfit_frontend/view/screens/therapist_setting_screen.dart';
 import 'package:neuralfit_frontend/viewmodel/provider.dart';
+import 'package:neuralfit_frontend/viewmodel/therapist_main_viewmodel.dart';
 
 class TherapistMainScreen extends ConsumerStatefulWidget {
   final currentIndex = 0;
@@ -18,8 +19,14 @@ class TherapistMainScreen extends ConsumerStatefulWidget {
 class PatientCard extends StatelessWidget {
   final PatientInfo patient;
   final bool isActive;
+  final TherapistMainViewModel therapistMainViewModel;
 
-  const PatientCard({required this.patient, this.isActive = false, super.key});
+  const PatientCard({
+    required this.patient,
+    this.isActive = false,
+    super.key,
+    required this.therapistMainViewModel,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -64,10 +71,10 @@ class PatientCard extends StatelessWidget {
                   const Spacer(), // 빈 공간 채우기
                   // PopupMenuButton (연결 끊기 옵션)
                   PopupMenuButton<String>(
-                    onSelected: (String result) {
+                    onSelected: (String result) async {
                       if (result == 'disconnect') {
-                        print('${patient.name} 환자 연결 끊기');
-                        // 연결 끊기 로직 구현
+                        await therapistMainViewModel.disconnect(patient);
+                        await therapistMainViewModel.fetchPatients();
                       }
                     },
                     itemBuilder: (BuildContext context) =>
@@ -158,6 +165,12 @@ class _TherapistMainScreenState extends ConsumerState<TherapistMainScreen> {
     );
 
     Widget buildEmptyState() {
+      // ⭐️ ViewModel에 접근하기 위해 ref.read를 사용합니다.
+      // 이 메서드가 ConsumerStatefulWidget의 State 클래스(_TherapistMainScreenState) 내부에 있어야 합니다.
+      final therapistMainViewModel = ref.read(
+        therapistMainViewModelProvider.notifier,
+      );
+
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(40.0),
@@ -187,13 +200,17 @@ class _TherapistMainScreenState extends ConsumerState<TherapistMainScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 30),
-              // 환자 연결 코드를 볼 수 있는 버튼 등을 추가할 수 있습니다.
+              // 환자 연결 코드를 볼 수 있는 버튼
               OutlinedButton.icon(
                 icon: const Icon(Icons.share),
                 label: const Text('연결 코드 공유'),
                 onPressed: () {
-                  // 연결 코드 공유 로직 (예: 설정 화면으로 이동)
-                  print('연결 코드 공유 버튼 클릭');
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const TherapistSettingScreen(),
+                    ),
+                  );
                 },
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
@@ -206,6 +223,18 @@ class _TherapistMainScreenState extends ConsumerState<TherapistMainScreen> {
                     borderRadius: BorderRadius.circular(10.0),
                   ),
                 ),
+              ),
+              const SizedBox(height: 10), // ⭐️ 버튼 간 간격 추가
+              // ⭐️ 새로고침 버튼 추가
+              TextButton.icon(
+                icon: const Icon(Icons.refresh),
+                label: const Text('새로고침'),
+                onPressed: () async {
+                  // 환자 목록 다시 불러오기
+                  await therapistMainViewModel.fetchPatients();
+                  print('환자 목록 새로고침 요청');
+                },
+                style: TextButton.styleFrom(foregroundColor: Colors.grey[600]),
               ),
             ],
           ),
@@ -278,6 +307,8 @@ class _TherapistMainScreenState extends ConsumerState<TherapistMainScreen> {
                                         child: PatientCard(
                                           patient: therapistMainState
                                               .patients[index],
+                                          therapistMainViewModel:
+                                              therapistMainViewModel,
                                         ),
                                       );
                                     },

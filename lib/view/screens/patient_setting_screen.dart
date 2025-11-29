@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:neuralfit_frontend/view/screens/initial_screen.dart';
 import 'package:neuralfit_frontend/viewmodel/patient_code_viewmodel.dart';
 import 'package:neuralfit_frontend/viewmodel/provider.dart';
@@ -39,7 +38,29 @@ class PatientSettingState extends ConsumerState<PatientSettingScreen> {
 
     void tryConnectButtonClicked() async {
       await patientCodeViewmodel.tryConnect();
-      _isConnected = false;
+
+      if (patientCodeState.errorMessage.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: Colors.white,
+            content: Text(
+              patientCodeState.errorMessage,
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        );
+        patientCodeViewmodel.setErrorMessage('');
+      } else {
+        setState(() {
+          _isConnected = true;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            backgroundColor: Colors.white,
+            content: Text("연결 되었습니다!", style: TextStyle(color: Colors.green)),
+          ),
+        );
+      }
     }
 
     return Scaffold(
@@ -76,7 +97,6 @@ class PatientSettingState extends ConsumerState<PatientSettingScreen> {
                 ),
                 onChanged: (value) {
                   patientCodeViewmodel.setCode(value);
-                  print(patientCodeState.inviteCode);
                 },
               ),
             ),

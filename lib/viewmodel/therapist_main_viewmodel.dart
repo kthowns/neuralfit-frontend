@@ -18,6 +18,11 @@ class TherapistMainViewModel extends StateNotifier<TherapistMainState> {
     final patients = await _userRepository.getPatients(accessToken);
     state = state.copyWith(patients: patients);
   }
+
+  Future<void> disconnect(PatientInfo patient) async {
+    await _userRepository.disconnect(accessToken, patient);
+    await fetchPatients();
+  }
 }
 
 class TherapistMainState {

@@ -25,8 +25,10 @@ class PatientCodeViewmodel extends StateNotifier<PatientCodeState> {
       await _userRepository.connect(accessCode, request);
     } on ApiException catch (e) {
       state = state.copyWith(errorMessage: e.message);
+      rethrow;
     } catch (e) {
       state = state.copyWith(errorMessage: "알 수 없는 오류가 발생했습니다.");
+      rethrow;
     }
   }
 
