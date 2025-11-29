@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:neuralfit_frontend/view/screens/patient_setting_screen.dart';
-import 'package:neuralfit_frontend/viewmodel/auth_state_notifier.dart';
 import 'package:neuralfit_frontend/viewmodel/provider.dart';
 
 class PatientMainScreen extends ConsumerStatefulWidget {
@@ -32,11 +31,6 @@ class _PatientMainScreenState extends ConsumerState<PatientMainScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(
-          // 이미지에 뒤로가기 버튼이 있지만, 메인 화면에서는 보통 생략.
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
-          onPressed: () {}, // TODO: 뒤로가기 기능
-        ),
         title: Text(
           '안녕하세요, ${authState.userInfo?.name}님!', // 개인화된 환영 메시지
           style: const TextStyle(
@@ -50,12 +44,6 @@ class _PatientMainScreenState extends ConsumerState<PatientMainScreen> {
             icon: const Icon(Icons.notifications_none, color: Colors.black),
             onPressed: () {
               // TODO: 알림 페이지로 이동
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings, color: Colors.black),
-            onPressed: () {
-              // TODO: 설정 페이지로 이동
             },
           ),
         ],

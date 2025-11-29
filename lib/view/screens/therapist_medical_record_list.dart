@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart'; // CupertinoDatePicker 사용을 위해 추가
 import 'package:neuralfit_frontend/model/patient_info.dart';
+import 'package:neuralfit_frontend/view/screens/therapist_add_record_screen.dart';
 
 // 진료 기록 상태 Enum
 enum AiReportStatus {
@@ -78,80 +80,74 @@ class _MedicalRecordListScreenState extends State<MedicalRecordListScreen> {
     }
   }
 
-  // 년도와 월만 선택하는 커스텀 다이얼 선택기
+  // ⭐️ 년도와 월만 선택하는 Cupertino 피커 (와이어프레임 UX 재현)
   Future<void> _selectMonthYear(BuildContext context) async {
-    // 현재 선택된 년도와 월의 초기 인덱스 계산
-    int initialYearIndex = _selectedDate.year - minYear;
-    int initialMonthIndex = _selectedDate.month - 1;
-
-    // 임시 변수에 현재 선택 값을 저장
-    int tempYear = _selectedDate.year;
-    int tempMonth = _selectedDate.month;
+    DateTime tempDate = _selectedDate; // 임시 변수에 현재 선택 값을 저장
 
     await showModalBottomSheet(
       context: context,
       builder: (BuildContext builder) {
         return Container(
-          height: 250.0,
+          height: 300.0,
           color: Colors.white,
           child: Column(
             children: [
-              // 1. 확인/취소 버튼 영역
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pop(context); // 취소
-                    },
-                    child: const Text(
-                      '취소',
-                      style: TextStyle(color: Colors.grey),
-                    ),
+              // 1. 확인/취소 버튼 영역 (와이어프레임 스타일)
+              Container(
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(color: Colors.grey.shade300),
                   ),
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        // 최종 선택된 년도와 월로 상태 업데이트
-                        _selectedDate = DateTime(tempYear, tempMonth, 1);
-                        print('선택된 날짜: $_selectedDate');
-                        // TODO: 이 날짜를 기반으로 리스트 필터링
-                      });
-                      Navigator.pop(context); // 확인
-                    },
-                    child: const Text(
-                      '확인',
-                      style: TextStyle(color: Colors.blue),
-                    ),
-                  ),
-                ],
-              ),
-              // 2. 년/월 스피너 영역
-              Expanded(
+                ),
                 child: Row(
-                  children: <Widget>[
-                    // 년도 스피너
-                    Expanded(
-                      child: Center(
-                        child: YearPickerSpinner(
-                          minYear: minYear,
-                          maxYear: maxYear,
-                          initialIndex: initialYearIndex,
-                          onChanged: (year) {
-                            tempYear = year;
-                          },
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context), // 취소
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          // 최종 선택된 년도와 월로 상태 업데이트
+                          // 날짜는 해당 월의 1일로 설정
+                          _selectedDate = DateTime(
+                            tempDate.year,
+                            tempDate.month,
+                            1,
+                          );
+                        });
+                        Navigator.pop(context); // 확인
+                      },
+                      child: const Text(
+                        'Done',
+                        style: TextStyle(
+                          color: Colors.blue,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                    // 월 스피너
+                  ],
+                ),
+              ),
+              // 2. 년/월 스피너 영역
+              SizedBox(
+                height: 200,
+                child: Row(
+                  children: <Widget>[
                     Expanded(
-                      child: Center(
-                        child: MonthPickerSpinner(
-                          initialIndex: initialMonthIndex,
-                          onChanged: (month) {
-                            tempMonth = month;
-                          },
-                        ),
+                      child: CupertinoDatePicker(
+                        // 와이어프레임처럼 년도와 월만 표시
+                        mode: CupertinoDatePickerMode.monthYear,
+                        initialDateTime: _selectedDate,
+                        minimumYear: minYear,
+                        maximumYear: maxYear,
+                        onDateTimeChanged: (DateTime newDateTime) {
+                          tempDate = newDateTime; // 임시 변수에 선택 값 저장
+                        },
                       ),
                     ),
                   ],
@@ -213,7 +209,7 @@ class _MedicalRecordListScreenState extends State<MedicalRecordListScreen> {
               vertical: 8.0,
             ),
             child: Text(
-              '이복순님의 진료기록',
+              '${widget.patientInfo.name}님의 진료기록', // PatientInfo 사용
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -302,147 +298,16 @@ class _MedicalRecordListScreenState extends State<MedicalRecordListScreen> {
       // 4. Floating Action Button (새 기록 추가)
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          print('새 진료 기록 추가');
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const TherapistAddRecordScreen(),
+            ),
+          );
         },
         backgroundColor: Colors.blueAccent,
         shape: const CircleBorder(),
         child: const Icon(Icons.add, color: Colors.white),
-      ),
-    );
-  }
-}
-
-// 년도 선택을 위한 커스텀 스피너 위젯
-class YearPickerSpinner extends StatefulWidget {
-  final int minYear;
-  final int maxYear;
-  final int initialIndex;
-  final ValueChanged<int> onChanged;
-
-  const YearPickerSpinner({
-    super.key,
-    required this.minYear,
-    required this.maxYear,
-    required this.initialIndex,
-    required this.onChanged,
-  });
-
-  @override
-  State<YearPickerSpinner> createState() => _YearPickerSpinnerState();
-}
-
-class _YearPickerSpinnerState extends State<YearPickerSpinner> {
-  late FixedExtentScrollController _scrollController;
-  late int _selectedYear;
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedYear = widget.minYear + widget.initialIndex;
-    _scrollController = FixedExtentScrollController(
-      initialItem: widget.initialIndex,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    int yearCount = widget.maxYear - widget.minYear + 1;
-
-    return ListWheelScrollView.useDelegate(
-      controller: _scrollController,
-      itemExtent: 40,
-      perspective: 0.003,
-      diameterRatio: 1.5,
-      physics: const FixedExtentScrollPhysics(),
-      onSelectedItemChanged: (index) {
-        _selectedYear = widget.minYear + index;
-        widget.onChanged(_selectedYear);
-      },
-      childDelegate: ListWheelChildBuilderDelegate(
-        childCount: yearCount,
-        builder: (context, index) {
-          final year = widget.minYear + index;
-          return Center(
-            child: Text(
-              '$year 년',
-              style: TextStyle(
-                fontSize: 20,
-                color: year == _selectedYear ? Colors.black : Colors.grey,
-                fontWeight: year == _selectedYear
-                    ? FontWeight.bold
-                    : FontWeight.normal,
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-// 월 선택을 위한 커스텀 스피너 위젯
-class MonthPickerSpinner extends StatefulWidget {
-  final int initialIndex; // 0 (1월) ~ 11 (12월)
-  final ValueChanged<int> onChanged; // 1월~12월로 반환
-
-  const MonthPickerSpinner({
-    super.key,
-    required this.initialIndex,
-    required this.onChanged,
-  });
-
-  @override
-  State<MonthPickerSpinner> createState() => _MonthPickerSpinnerState();
-}
-
-class _MonthPickerSpinnerState extends State<MonthPickerSpinner> {
-  late FixedExtentScrollController _scrollController;
-  late int _selectedMonthIndex;
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedMonthIndex = widget.initialIndex;
-    _scrollController = FixedExtentScrollController(
-      initialItem: widget.initialIndex,
-    );
-    // 초기값 변경 알림
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      widget.onChanged(_selectedMonthIndex + 1);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ListWheelScrollView.useDelegate(
-      controller: _scrollController,
-      itemExtent: 40,
-      perspective: 0.003,
-      diameterRatio: 1.5,
-      physics: const FixedExtentScrollPhysics(),
-      onSelectedItemChanged: (index) {
-        _selectedMonthIndex = index;
-        widget.onChanged(index + 1); // 1~12월로 변환하여 전달
-      },
-      childDelegate: ListWheelChildBuilderDelegate(
-        childCount: 12,
-        builder: (context, index) {
-          final month = index + 1;
-          return Center(
-            child: Text(
-              '${month.toString().padLeft(2, '0')} 월',
-              style: TextStyle(
-                fontSize: 20,
-                color: index == _selectedMonthIndex
-                    ? Colors.black
-                    : Colors.grey,
-                fontWeight: index == _selectedMonthIndex
-                    ? FontWeight.bold
-                    : FontWeight.normal,
-              ),
-            ),
-          );
-        },
       ),
     );
   }
