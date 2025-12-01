@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:neuralfit_frontend/view/patient_main_screen.dart';
-import 'package:neuralfit_frontend/view/therapist_main_screen.dart';
+import 'package:neuralfit_frontend/view/screens/patient_main_screen.dart';
+import 'package:neuralfit_frontend/view/screens/therapist_main_screen.dart';
 import 'package:neuralfit_frontend/viewmodel/auth_state_notifier.dart';
 import 'package:neuralfit_frontend/viewmodel/provider.dart';
 
@@ -285,6 +285,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           const SizedBox(height: 24),
                         ],
                       ),
+                      /*
                       Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -349,6 +350,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                         ],
                       ),
+                      */
                     ],
                   ),
                 ),

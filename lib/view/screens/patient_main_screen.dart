@@ -1,52 +1,39 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:neuralfit_frontend/view/screens/patient_medical_record_list.dart';
+import 'package:neuralfit_frontend/view/screens/patient_setting_screen.dart';
+import 'package:neuralfit_frontend/viewmodel/provider.dart';
 
-class PatientMainScreen extends StatefulWidget {
-  const PatientMainScreen({Key? key}) : super(key: key);
+class PatientMainScreen extends ConsumerStatefulWidget {
+  const PatientMainScreen({super.key});
 
   @override
-  State<PatientMainScreen> createState() => _PatientMainScreenState();
+  ConsumerState<PatientMainScreen> createState() => _PatientMainScreenState();
 }
 
-class _PatientMainScreenState extends State<PatientMainScreen> {
-  // 실제 앱에서는 사용자 이름 등을 상태 관리 툴(Provider, BLoC 등)로 가져옵니다.
-  final String userName = "김철수";
-
+class _PatientMainScreenState extends ConsumerState<PatientMainScreen> {
   // 예시 데이터
   final List<String> dailyActivities = [
     "오늘의 인지력 강화 가이드: 퍼즐 맞추기 30분!",
     "치매 예방 액티비티: 가벼운 산책 20분",
     "생활 습관 개선 가이드: 충분한 수면 7시간",
   ];
-  int _currentActivityIndex = 0; // 오늘의 액티비티 슬라이더를 위한 인덱스
-
-  @override
-  void initState() {
-    super.initState();
-    // 일정 시간마다 오늘의 액티비티를 변경하는 로직 (예시)
-    // Future.delayed(Duration(seconds: 5), _updateActivity);
-  }
-
-  void _updateActivity() {
-    setState(() {
-      _currentActivityIndex =
-          (_currentActivityIndex + 1) % dailyActivities.length;
-    });
-    // Future.delayed(Duration(seconds: 5), _updateActivity); // 무한 반복
-  }
+  int _currentActivityIndex = 0;
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authStateNotifierProvider);
+    final patientMainViewmodel = ref.read(
+      patientMainViewmodelProvider.notifier,
+    );
+    final patientMainState = ref.watch(patientMainViewmodelProvider);
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(
-          // 이미지에 뒤로가기 버튼이 있지만, 메인 화면에서는 보통 생략.
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
-          onPressed: () {}, // TODO: 뒤로가기 기능
-        ),
         title: Text(
-          '안녕하세요, $userName님!', // 개인화된 환영 메시지
+          '안녕하세요, ${authState.userInfo?.name}님!', // 개인화된 환영 메시지
           style: const TextStyle(
             color: Colors.black,
             fontSize: 20,
@@ -58,12 +45,6 @@ class _PatientMainScreenState extends State<PatientMainScreen> {
             icon: const Icon(Icons.notifications_none, color: Colors.black),
             onPressed: () {
               // TODO: 알림 페이지로 이동
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings, color: Colors.black),
-            onPressed: () {
-              // TODO: 설정 페이지로 이동
             },
           ),
         ],
@@ -101,20 +82,28 @@ class _PatientMainScreenState extends State<PatientMainScreen> {
         unselectedItemColor: Colors.grey,
         currentIndex: 0, // 현재 선택된 탭
         onTap: (index) {
-          // TODO: 탭 이동 로직
+          if (index == 2) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PatientMedicalRecordListScreen(),
+              ),
+            );
+          } else if (index == 3) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => PatientSettingScreen()),
+            );
+          }
         },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: '메인'),
           BottomNavigationBarItem(icon: Icon(Icons.show_chart), label: '리포트'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.extension), // 퍼즐 아이콘
-            label: '액티비티',
-          ),
-          BottomNavigationBarItem(
             icon: Icon(Icons.calendar_today),
-            label: '예약',
+            label: '진료',
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.more_horiz), label: '더보기'),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: '설정'),
         ],
       ),
     );

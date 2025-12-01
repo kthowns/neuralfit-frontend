@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:neuralfit_frontend/dto/app_user_info.dart';
+import 'package:neuralfit_frontend/model/app_user_info.dart';
 
 class AuthStateNotifier extends StateNotifier<AuthState> {
   AuthStateNotifier() : super(const AuthState());
@@ -14,10 +14,6 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       accessToken: accessToken,
       refreshToken: refreshToken,
       userInfo: userInfo,
-    );
-
-    print(
-      'AuthState updated: ${state.isLoggedIn}, User: ${state.userInfo?.email}',
     );
   }
 

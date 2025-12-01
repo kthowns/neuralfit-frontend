@@ -5,10 +5,10 @@ class AddAppointmentScreen extends StatefulWidget {
   const AddAppointmentScreen({super.key});
 
   @override
-  _AddAppointmentScreenState createState() => _AddAppointmentScreenState();
+  AddAppointmentScreenState createState() => AddAppointmentScreenState();
 }
 
-class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
+class AddAppointmentScreenState extends State<AddAppointmentScreen> {
   // 상태 관리를 위한 변수들
   DateTime _selectedDate = DateTime(2025, 9, 17, 13, 30);
   String _memo = "특이사항 없음";
