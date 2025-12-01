@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:neuralfit_frontend/model/medical_record.dart';
-import 'package:neuralfit_frontend/model/patient_info.dart';
-import 'package:neuralfit_frontend/view/screens/therapist_add_record_screen.dart';
+import 'package:neuralfit_frontend/viewmodel/patient_record_viewmodel.dart';
 import 'package:neuralfit_frontend/viewmodel/provider.dart';
-import 'package:neuralfit_frontend/viewmodel/therapist_record_viewmodel.dart';
 
 // 진료 기록 상태 Enum
 enum AiReportStatus {
@@ -14,17 +12,16 @@ enum AiReportStatus {
   generating, // 생성 중
 }
 
-// MedicalRecordListScreen을 StatefulWidget으로 변경하여 상태 관리가 가능하도록 합니다.
-class MedicalRecordListScreen extends ConsumerStatefulWidget {
-  const MedicalRecordListScreen({super.key});
+class PatientMedicalRecordListScreen extends ConsumerStatefulWidget {
+  const PatientMedicalRecordListScreen({super.key});
 
   @override
-  ConsumerState<MedicalRecordListScreen> createState() =>
-      _MedicalRecordListScreenState();
+  ConsumerState<PatientMedicalRecordListScreen> createState() =>
+      _PatientMedicalRecordListScreenState();
 }
 
-class _MedicalRecordListScreenState
-    extends ConsumerState<MedicalRecordListScreen> {
+class _PatientMedicalRecordListScreenState
+    extends ConsumerState<PatientMedicalRecordListScreen> {
   // 설정 가능한 최소/최대 년도
   static const int minYear = 2020;
   static const int maxYear = 2030;
@@ -53,10 +50,10 @@ class _MedicalRecordListScreenState
 
   Future<void> _selectMonthYear(
     BuildContext context,
-    TherapistRecordState therapistRecordState,
-    TherapistRecordViewmodel therapistRecordViewmodel,
+    PatientRecordState patientRecordState,
+    PatientRecordViewmodel patientRecordViewmodel,
   ) async {
-    DateTime tempDate = therapistRecordState.selectedTime; // 임시 변수에 현재 선택 값을 저장
+    DateTime tempDate = patientRecordState.selectedTime; // 임시 변수에 현재 선택 값을 저장
 
     await showModalBottomSheet(
       context: context,
@@ -85,7 +82,7 @@ class _MedicalRecordListScreenState
                     ),
                     TextButton(
                       onPressed: () {
-                        therapistRecordViewmodel.setSelectedTime(
+                        patientRecordViewmodel.setSelectedTime(
                           DateTime(tempDate.year, tempDate.month, 1),
                         );
                         Navigator.pop(context); // 확인
@@ -110,7 +107,7 @@ class _MedicalRecordListScreenState
                       child: CupertinoDatePicker(
                         // 와이어프레임처럼 년도와 월만 표시
                         mode: CupertinoDatePickerMode.monthYear,
-                        initialDateTime: therapistRecordState.selectedTime,
+                        initialDateTime: patientRecordState.selectedTime,
                         minimumYear: minYear,
                         maximumYear: maxYear,
                         onDateTimeChanged: (DateTime newDateTime) {
@@ -130,13 +127,14 @@ class _MedicalRecordListScreenState
 
   @override
   Widget build(BuildContext context) {
-    final therapistRecordState = ref.watch(therapistRecordViewmodelProvider);
-    final therapistRecordViewmodel = ref.read(
-      therapistRecordViewmodelProvider.notifier,
+    final patientRecordState = ref.watch(patientRecordViewmodelProvider);
+    final patientRecordViewmodel = ref.read(
+      patientRecordViewmodelProvider.notifier,
     );
+    final authState = ref.watch(authStateNotifierProvider);
 
     final formattedMonthYear =
-        '${therapistRecordState.selectedTime.year}. ${therapistRecordState.selectedTime.month.toString().padLeft(2, '0')}';
+        '${patientRecordState.selectedTime.year}. ${patientRecordState.selectedTime.month.toString().padLeft(2, '0')}';
 
     return Scaffold(
       appBar: AppBar(
@@ -159,7 +157,7 @@ class _MedicalRecordListScreenState
               vertical: 8.0,
             ),
             child: Text(
-              '${therapistRecordState.currentPatient?.name}님의 진료기록', // PatientInfo 사용
+              '${authState.userInfo?.name}님의 진료기록',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -181,8 +179,8 @@ class _MedicalRecordListScreenState
                 InkWell(
                   onTap: () => _selectMonthYear(
                     context,
-                    therapistRecordState,
-                    therapistRecordViewmodel,
+                    patientRecordState,
+                    patientRecordViewmodel,
                   ),
                   child: Row(
                     children: [
@@ -215,9 +213,7 @@ class _MedicalRecordListScreenState
                         DropdownMenuItem(value: '최신순', child: Text('최신순')),
                         DropdownMenuItem(value: '과거순', child: Text('과거순')),
                       ],
-                      onChanged: (String? newValue) {
-                        // TODO: 정렬 로직 구현
-                      },
+                      onChanged: (String? newValue) {},
                       underline: Container(),
                     ),
                   ],
@@ -228,7 +224,7 @@ class _MedicalRecordListScreenState
 
           // 3. 진료 기록 리스트 영역
           Expanded(
-            child: therapistRecordState.medicalRecords.isEmpty
+            child: patientRecordState.medicalRecords.isEmpty
                 ? Center(
                     child: Column(
                       children: [
@@ -241,7 +237,7 @@ class _MedicalRecordListScreenState
                           icon: const Icon(Icons.refresh),
                           label: const Text('새로고침'),
                           onPressed: () async {
-                            await therapistRecordViewmodel.fetchRecords();
+                            await patientRecordViewmodel.fetchRecords();
                           },
                           style: TextButton.styleFrom(
                             foregroundColor: Colors.grey[600],
@@ -251,31 +247,16 @@ class _MedicalRecordListScreenState
                     ),
                   )
                 : ListView.builder(
-                    itemCount: therapistRecordState.medicalRecords.length,
+                    itemCount: patientRecordState.medicalRecords.length,
                     itemBuilder: (context, index) {
                       return MedicalRecordListItem(
-                        record: therapistRecordState.medicalRecords[index],
+                        record: patientRecordState.medicalRecords[index],
                         getWeekday: _getWeekday,
                       );
                     },
                   ),
           ),
         ],
-      ),
-
-      // 4. Floating Action Button (새 기록 추가)
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const TherapistAddRecordScreen(),
-            ),
-          );
-        },
-        backgroundColor: Colors.blueAccent,
-        shape: const CircleBorder(),
-        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }

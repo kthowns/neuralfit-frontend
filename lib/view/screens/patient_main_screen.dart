@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:neuralfit_frontend/view/screens/patient_medical_record_list.dart';
 import 'package:neuralfit_frontend/view/screens/patient_setting_screen.dart';
 import 'package:neuralfit_frontend/viewmodel/provider.dart';
 
@@ -81,7 +82,14 @@ class _PatientMainScreenState extends ConsumerState<PatientMainScreen> {
         unselectedItemColor: Colors.grey,
         currentIndex: 0, // 현재 선택된 탭
         onTap: (index) {
-          if (index == 3) {
+          if (index == 2) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PatientMedicalRecordListScreen(),
+              ),
+            );
+          } else if (index == 3) {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => PatientSettingScreen()),

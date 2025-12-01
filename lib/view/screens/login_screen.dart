@@ -285,6 +285,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           const SizedBox(height: 24),
                         ],
                       ),
+                      /*
                       Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -349,6 +350,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                         ],
                       ),
+                      */
                     ],
                   ),
                 ),

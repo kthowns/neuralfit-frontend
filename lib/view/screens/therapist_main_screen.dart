@@ -33,7 +33,6 @@ class PatientCard extends StatelessWidget {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       margin: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 20.0),
-      // 활성화된 카드에 약간의 elevation 변화를 줄 수 있습니다.
       child: Card(
         elevation: isActive ? 12.0 : 4.0,
         shape: RoundedRectangleBorder(
@@ -45,11 +44,9 @@ class PatientCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              // --- 1. 사진(Image Text) 및 PopupMenuButton 영역 ---
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  // 사진 (공백에 Image Text로 대체)
                   Container(
                     width: 70,
                     height: 70,
@@ -69,7 +66,6 @@ class PatientCard extends StatelessWidget {
                     ),
                   ),
                   const Spacer(), // 빈 공간 채우기
-                  // PopupMenuButton (연결 끊기 옵션)
                   PopupMenuButton<String>(
                     onSelected: (String result) async {
                       if (result == 'disconnect') {
@@ -110,12 +106,12 @@ class PatientCard extends StatelessWidget {
               ElevatedButton.icon(
                 icon: const Icon(Icons.history),
                 label: const Text('진료기록 목록 확인'),
-                onPressed: () {
+                onPressed: () async {
+                  await therapistMainViewModel.setCurrentPatient(patient);
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          MedicalRecordListScreen(patientInfo: patient),
+                      builder: (context) => MedicalRecordListScreen(),
                     ),
                   );
                 },
@@ -224,15 +220,13 @@ class _TherapistMainScreenState extends ConsumerState<TherapistMainScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 10), // ⭐️ 버튼 간 간격 추가
-              // ⭐️ 새로고침 버튼 추가
+              const SizedBox(height: 10),
               TextButton.icon(
                 icon: const Icon(Icons.refresh),
                 label: const Text('새로고침'),
                 onPressed: () async {
                   // 환자 목록 다시 불러오기
                   await therapistMainViewModel.fetchPatients();
-                  print('환자 목록 새로고침 요청');
                 },
                 style: TextButton.styleFrom(foregroundColor: Colors.grey[600]),
               ),

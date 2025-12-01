@@ -2,18 +2,19 @@ class MedicalRecord {
   final int id;
   final int patientId;
   final int therapistId;
-  final String description;
+  final String? description;
+  final String? patientComment;
   final DateTime consultationDate;
-  final String diagnosis;
-  final int moca;
-  final int mmse;
-  final int faq;
-  final int ldelTotal;
-  final int adas13;
-  final double abeta;
-  final double ptau;
-  final double ecogPtMem;
-  final double ecogPtTotal;
+  final String? diagnosis;
+  final int? moca;
+  final int? mmse;
+  final int? faq;
+  final int? ldelTotal;
+  final int? adas13;
+  final double? abeta;
+  final double? ptau;
+  final double? ecogPtMem;
+  final double? ecogPtTotal;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -22,6 +23,7 @@ class MedicalRecord {
     required this.patientId,
     required this.therapistId,
     required this.description,
+    required this.patientComment,
     required this.consultationDate,
     required this.diagnosis,
     required this.moca,
@@ -36,13 +38,16 @@ class MedicalRecord {
     required this.createdAt,
     required this.updatedAt,
   });
-
   factory MedicalRecord.fromJson(Map<String, dynamic> json) {
+    double? parseNullableDouble(dynamic value) =>
+        value == null ? null : (value as num).toDouble();
+
     return MedicalRecord(
       id: json['id'],
       patientId: json['patientId'],
       therapistId: json['therapistId'],
       description: json['description'],
+      patientComment: json['patientComment'],
       consultationDate: DateTime.parse(json['consultationDate']),
       diagnosis: json['diagnosis'],
       moca: json['moca'],
@@ -50,10 +55,10 @@ class MedicalRecord {
       faq: json['faq'],
       ldelTotal: json['ldelTotal'],
       adas13: json['adas13'],
-      abeta: (json['abeta'] as num).toDouble(),
-      ptau: (json['ptau'] as num).toDouble(),
-      ecogPtMem: (json['ecogPtMem'] as num).toDouble(),
-      ecogPtTotal: (json['ecogPtTotal'] as num).toDouble(),
+      abeta: parseNullableDouble(json['abeta']),
+      ptau: parseNullableDouble(json['ptau']),
+      ecogPtMem: parseNullableDouble(json['ecogPtMem']),
+      ecogPtTotal: parseNullableDouble(json['ecogPtTotal']),
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
     );

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:neuralfit_frontend/view/screens/login_screen.dart';
-import 'package:neuralfit_frontend/view/screens/patient_main_screen.dart';
-import 'package:neuralfit_frontend/view/screens/therapist_main_screen.dart';
 
 class InitialScreen extends StatefulWidget {
   const InitialScreen({super.key});
@@ -26,20 +24,14 @@ class _InitialScreenState extends State<InitialScreen> {
   };
 
   Future<void> _initializeApp() async {
-    await Future.delayed(const Duration(seconds: 2)); // 로딩 시뮬레이션
+    await Future.delayed(const Duration(seconds: 1)); // 로딩 시뮬레이션
 
     if (!mounted) return;
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
         builder: (_) {
-          if (isPatient) {
-            return const PatientMainScreen();
-          } else if (isTherapist) {
-            return const TherapistMainScreen();
-          } else {
-            return const LoginScreen();
-          }
+          return const LoginScreen();
         },
       ),
     );
@@ -52,25 +44,7 @@ class _InitialScreenState extends State<InitialScreen> {
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ElevatedButton(
-              onPressed: () {
-                isPatient = true;
-                isTherapist = false;
-              },
-              child: const Text('Login as Patient'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                isPatient = false;
-                isTherapist = true;
-              },
-              child: const Text('Login as Therapist'),
-            ),
-            //FlutterLogo(size: 100),
-            //SizedBox(height: 20),
-            const CircularProgressIndicator(),
-          ],
+          children: [const CircularProgressIndicator()],
         ),
       ),
     );

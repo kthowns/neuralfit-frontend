@@ -1,11 +1,11 @@
+import 'package:neuralfit_frontend/api/repository.dart';
 import 'package:neuralfit_frontend/dto/connection_try_request.dart';
 import 'package:neuralfit_frontend/model/app_user_info.dart';
 import 'package:neuralfit_frontend/dto/login_dto.dart';
 import 'package:dio/dio.dart';
-import 'package:neuralfit_frontend/exception/api_exception.dart';
 import 'package:neuralfit_frontend/model/patient_info.dart';
 
-class UserRepository {
+class UserRepository extends Repository {
   final Dio dio;
 
   UserRepository(this.dio);
@@ -16,10 +16,10 @@ class UserRepository {
       print('/auth/login ${response.data}');
       return LoginResponse.fromJson(response.data);
     } on DioException catch (e) {
-      throw _handleApiException(e);
+      throw handleApiException(e);
     } catch (e) {
       print('/auth/login unknown error: $e');
-      throw _handleUnknownException(e);
+      throw handleUnknownException(e);
     }
   }
 
@@ -33,10 +33,10 @@ class UserRepository {
       return AppUserInfo.fromJson(response.data);
     } on DioException catch (e) {
       print('/user/me error : ${e.response?.data} $e');
-      throw _handleApiException(e);
+      throw handleApiException(e);
     } catch (e) {
       print('/user/me unknown error: $e');
-      throw _handleUnknownException(e);
+      throw handleUnknownException(e);
     }
   }
 
@@ -50,10 +50,10 @@ class UserRepository {
       return response.data['key'];
     } on DioException catch (e) {
       print('/user/connection/generate error : ${e.response?.data} $e');
-      throw _handleApiException(e);
+      throw handleApiException(e);
     } catch (e) {
       print('/user/connection/generate unknown error: $e');
-      throw _handleUnknownException(e);
+      throw handleUnknownException(e);
     }
   }
 
@@ -68,10 +68,10 @@ class UserRepository {
           .map((patient) => PatientInfo.fromJson(patient))
           .toList();
     } on DioException catch (e) {
-      throw _handleApiException(e);
+      throw handleApiException(e);
     } catch (e) {
       print('/user/my-patients unknown error: $e');
-      throw _handleUnknownException(e);
+      throw handleUnknownException(e);
     }
   }
 
@@ -84,10 +84,10 @@ class UserRepository {
       );
       print('/user/connection/try ${response.data}');
     } on DioException catch (e) {
-      throw _handleApiException(e);
+      throw handleApiException(e);
     } catch (e) {
       print('/user/connection/try unknown error: $e');
-      throw _handleUnknownException(e);
+      throw handleUnknownException(e);
     }
   }
 
@@ -99,35 +99,10 @@ class UserRepository {
       );
       print('DELETE /user/connection/ ${response.data}');
     } on DioException catch (e) {
-      throw _handleApiException(e);
+      throw handleApiException(e);
     } catch (e) {
       print('DELETE /user/connection/try unknown error: $e');
-      throw _handleUnknownException(e);
+      throw handleUnknownException(e);
     }
-  }
-
-  ApiException _handleApiException(DioException e) {
-    // 반환 타입 안정성 체크
-    final data = e.response?.data;
-    final Map<String, dynamic> mapData = data is Map<String, dynamic>
-        ? data
-        : {};
-
-    print('[${e.response?.statusCode}] DioException: $data $e');
-
-    if (mapData.isEmpty) {
-      mapData['message'] = '서버에 알 수 없는 문제가 발생했습니다 :500';
-    }
-
-    return ApiException(
-      message: mapData['message'] ?? '알 수 없는 오류가 발생했습니다.',
-      status: mapData['status'] ?? 500,
-      errors: mapData['errors'] ?? {},
-    );
-  }
-
-  ApiException _handleUnknownException(Object e) {
-    print('Unknown exception: $e');
-    return ApiException(message: '알 수 없는 오류가 발생했습니다.', status: 500, errors: {});
   }
 }

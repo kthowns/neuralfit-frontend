@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:neuralfit_frontend/dto/add_medical_record_request.dart';
+import 'package:neuralfit_frontend/exception/api_exception.dart';
+import 'package:neuralfit_frontend/viewmodel/provider.dart';
+import 'package:neuralfit_frontend/viewmodel/therapist_record_viewmodel.dart';
 
-class TherapistAddRecordScreen extends StatefulWidget {
+class TherapistAddRecordScreen extends ConsumerStatefulWidget {
   const TherapistAddRecordScreen({super.key});
 
   @override
-  State<TherapistAddRecordScreen> createState() => _TherapistAddRecordState();
+  ConsumerState<TherapistAddRecordScreen> createState() =>
+      _TherapistAddRecordState();
 }
 
-class _TherapistAddRecordState extends State<TherapistAddRecordScreen> {
-  // --- State Variables ---
-
+class _TherapistAddRecordState extends ConsumerState<TherapistAddRecordScreen> {
   // 1. DX (Diagnosis)
   int _dxIndex = 1; // 와이어프레임처럼 '경도인지장애'를 기본 선택으로 가정
   final List<String> dxLabels = [
@@ -21,9 +25,8 @@ class _TherapistAddRecordState extends State<TherapistAddRecordScreen> {
   ];
 
   bool _isMemoEditing = false;
+  bool _isSubmitted = false;
 
-  // 2. 생체 검사 데이터
-  bool _isBiomarkerExpanded = true;
   final TextEditingController _abetaController = TextEditingController();
   final TextEditingController _ptauController = TextEditingController();
   final TextEditingController _mriMemoController =
@@ -37,27 +40,21 @@ class _TherapistAddRecordState extends State<TherapistAddRecordScreen> {
   bool _isAdas13Expanded = false;
   bool _isLdelTotalExpanded = false;
 
-  double _mocaValue = 15; // 0~30
-  double _faqValue = 5; // 0~30
-  double _mmseValue = 20; // 0~30
-  double _ldelTotalValue = 10; // 0~25
-  double _adas13Value = 30; // 0~85
+  double _mocaValue = 0; // 0~30
+  double _faqValue = 0; // 0~30
+  double _mmseValue = 0; // 0~30
+  double _ldelTotalValue = 0; // 0~25
+  double _adas13Value = 0; // 0~85
 
   // 기타
-  DateTime _selectedDate = DateTime(2025, 8, 17); // 와이어프레임 날짜 참고
-  TimeOfDay _selectedTime = const TimeOfDay(
-    hour: 13,
-    minute: 30,
-  ); // 와이어프레임 시간 참고
+  DateTime _selectedDate = DateTime.now();
+  TimeOfDay _selectedTime = const TimeOfDay(hour: 12, minute: 00);
   final TextEditingController _memoController = TextEditingController(
     text: '특이사항 없음',
   );
   final TextEditingController _patientCommentController =
       TextEditingController();
 
-  // --- UI Component Builders ---
-
-  // DX (진단 구분) 단계 인디케이터 (와이어프레임 스타일)
   Widget _buildDxStepIndicator() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -78,7 +75,6 @@ class _TherapistAddRecordState extends State<TherapistAddRecordScreen> {
               Color color = isSelected
                   ? Colors.blueAccent
                   : Colors.grey.shade400;
-              Color circleColor = isSelected ? Colors.blueAccent : Colors.white;
 
               return Expanded(
                 child: GestureDetector(
@@ -138,7 +134,6 @@ class _TherapistAddRecordState extends State<TherapistAddRecordScreen> {
     );
   }
 
-  // 와이어프레임 스타일의 확장 가능한 슬라이더 입력 필드
   Widget _buildCollapsibleSliderInput({
     required String label,
     required double value,
@@ -149,7 +144,6 @@ class _TherapistAddRecordState extends State<TherapistAddRecordScreen> {
     required VoidCallback onToggleExpand,
     String subLabel = '',
   }) {
-    // 와이어프레임의 회색 배경 스타일 적용
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4.0),
       decoration: BoxDecoration(
@@ -242,17 +236,23 @@ class _TherapistAddRecordState extends State<TherapistAddRecordScreen> {
     );
   }
 
-  // --- Main Build Method ---
-
   @override
   Widget build(BuildContext context) {
+    final TherapistRecordViewmodel therapistRecordViewmodel = ref.read(
+      therapistRecordViewmodelProvider.notifier,
+    );
+    final TherapistRecordState therapistRecordState = ref.watch(
+      therapistRecordViewmodelProvider,
+    );
+    final authState = ref.watch(authStateNotifierProvider);
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text('이복순 님의 진료 기록'), // 와이어프레임 텍스트 반영
+        title: Text('${therapistRecordState.currentPatient?.name} 님의 진료 기록'),
         centerTitle: false,
       ),
       body: SingleChildScrollView(
@@ -305,7 +305,6 @@ class _TherapistAddRecordState extends State<TherapistAddRecordScreen> {
                   setState(() => _isMocaExpanded = !_isMocaExpanded),
             ),
 
-            // FAQ (와이어프레임 CDR 자리에 FAQ 구현)
             _buildCollapsibleSliderInput(
               label: 'FAQ',
               subLabel: '일상생활수행능력',
@@ -317,31 +316,27 @@ class _TherapistAddRecordState extends State<TherapistAddRecordScreen> {
               onToggleExpand: () =>
                   setState(() => _isFaqExpanded = !_isFaqExpanded),
             ),
-
-            // 기타 인지 기능 검사 (ADAS13, LDELTOTAL)
             _buildOtherCognitiveTestSection(),
-
             const Divider(height: 30),
-
-            // --- 5. MRI 이미지 데이터 (와이어프레임 반영) ---
             _buildMriSection(),
             const Divider(height: 30),
-
-            // --- 6. 환자 코멘트 (와이어프레임 반영) ---
             _buildPatientCommentSection(),
 
             const SizedBox(height: 80), // 하단 '추가' 버튼 공간 확보
           ],
         ),
       ),
-      // --- Floating Action Button (FAB) for '추가' (와이어프레임 위치 참고) ---
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20.0),
         child: SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: _submitData,
+            onPressed: _isSubmitted
+                ? null
+                : () async {
+                    await _submitData(therapistRecordViewmodel);
+                  },
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 15),
               backgroundColor: Colors.blueAccent,
@@ -406,7 +401,6 @@ class _TherapistAddRecordState extends State<TherapistAddRecordScreen> {
             child: Row(
               children: [
                 Text(
-                  // 와이어프레임과 동일한 날짜/시간 포맷
                   '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')} ${_selectedTime.format(context)}',
                   style: const TextStyle(fontSize: 16),
                 ),
@@ -551,7 +545,7 @@ class _TherapistAddRecordState extends State<TherapistAddRecordScreen> {
           controller: _patientCommentController,
           maxLines: 3,
           decoration: InputDecoration(
-            hintText: '환자가 보고한 주관적 증상을 기록하세요.',
+            hintText: '환자에게 코멘트를 기록하세요.',
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
             contentPadding: const EdgeInsets.all(12),
             isDense: true,
@@ -589,13 +583,11 @@ class _TherapistAddRecordState extends State<TherapistAddRecordScreen> {
           onToggleExpand: () =>
               setState(() => _isLdelTotalExpanded = !_isLdelTotalExpanded),
         ),
-        // ABETA (생체 검사지만, 인지 기능 평가 아래에 와이어프레임 형태를 위해 배치)
         _buildBiomarkerInput(
           label: 'ABETA',
           hintText: 'Aβ42/40 비율 또는 농도 (실수)',
           controller: _abetaController,
         ),
-        // PTAU
         _buildBiomarkerInput(
           label: 'PTAU',
           hintText: '인산화 타우 단백질 농도 (실수)',
@@ -620,6 +612,15 @@ class _TherapistAddRecordState extends State<TherapistAddRecordScreen> {
         ),
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         child: TextFormField(
+          onChanged: (value) {
+            double? valueDouble = double.tryParse(value);
+            if (valueDouble == null) {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('실수를 입력해주세요.')));
+              value = '';
+            }
+          },
           controller: controller,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           decoration: InputDecoration(
@@ -634,37 +635,9 @@ class _TherapistAddRecordState extends State<TherapistAddRecordScreen> {
     );
   }
 
-  // --- Logic Methods ---
-
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
-    );
-    if (pickedDate != null && pickedDate != _selectedDate) {
-      setState(() {
-        _selectedDate = pickedDate;
-      });
-    }
-  }
-
-  Future<void> _selectTime(BuildContext context) async {
-    final TimeOfDay? pickedTime = await showTimePicker(
-      context: context,
-      initialTime: _selectedTime,
-    );
-    if (pickedTime != null && pickedTime != _selectedTime) {
-      setState(() {
-        _selectedTime = pickedTime;
-      });
-    }
-  }
-
-  void _submitData() {
-    final currentDx = dxLabels[_dxIndex];
-
+  Future<void> _submitData(
+    TherapistRecordViewmodel therapistRecordViewmodel,
+  ) async {
     if (_dxIndex == -1) {
       ScaffoldMessenger.of(
         context,
@@ -672,25 +645,60 @@ class _TherapistAddRecordState extends State<TherapistAddRecordScreen> {
       return;
     }
 
-    // 최종 데이터를 콘솔에 출력
-    print('--- 진료 기록 제출 ---');
-    print(
-      '진료 일시: ${_selectedDate.toIso8601String().split('T')[0]} ${_selectedTime.format(context)}',
-    );
-    print('DX: $currentDx');
-    print('MMSE: ${_mmseValue.round()}');
-    print('MoCA: ${_mocaValue.round()}');
-    print('FAQ: ${_faqValue.round()}');
-    print('LDELTOTAL: ${_ldelTotalValue.round()}');
-    print('ADAS13: ${_adas13Value.round()}');
-    print('ABETA: ${_abetaController.text}');
-    print('PTAU: ${_ptauController.text}');
-    print('메모: ${_memoController.text}');
-    print('환자 코멘트: ${_patientCommentController.text}');
+    try {
+      setState(() {
+        _isSubmitted = true;
+      });
+      String diagnosis = '';
+      if (_dxIndex == 0) {
+        diagnosis = "CN";
+      } else if (_dxIndex == 1) {
+        diagnosis = "MCI";
+      } else {
+        diagnosis = "DEMENTIA";
+      }
+      final request = AddMedicalRecordRequest(
+        consultationDate: DateTime(
+          _selectedDate.year,
+          _selectedDate.month,
+          _selectedDate.day,
+          _selectedTime.hour,
+          _selectedTime.minute,
+        ),
+        description: _memoController.text,
+        diagnosis: diagnosis,
+        patientComment: _patientCommentController.text,
+        mmse: _isMmseExpanded ? _mmseValue.toInt() : null,
+        moca: _isMocaExpanded ? _mocaValue.toInt() : null,
+        faq: _isFaqExpanded ? _faqValue.toInt() : null,
+        adas13: _isAdas13Expanded ? _adas13Value.toInt() : null,
+        ldelTotal: _isLdelTotalExpanded ? _ldelTotalValue.toInt() : null,
+        abeta: _abetaController.text.isNotEmpty
+            ? double.tryParse(_abetaController.text)
+            : null,
+        ptau: _ptauController.text.isNotEmpty
+            ? double.tryParse(_ptauController.text)
+            : null,
+      );
+      print(request);
+      await therapistRecordViewmodel.addRecord(request);
+      Navigator.pop(context);
+    } on ApiException catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('${e.status}: ${e.message}')));
+      setState(() {
+        _isSubmitted = false;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('오류가 발생했습니다.')));
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$currentDx 진단, 진료 기록이 성공적으로 저장되었습니다.')),
-    );
+      setState(() {
+        _isSubmitted = false;
+      });
+    }
   }
 
   @override

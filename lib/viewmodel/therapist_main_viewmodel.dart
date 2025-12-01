@@ -19,6 +19,11 @@ class TherapistMainViewModel extends StateNotifier<TherapistMainState> {
     state = state.copyWith(patients: patients);
   }
 
+  Future<void> setCurrentPatient(PatientInfo patient) async {
+    state = state.copyWith(selectedPatient: patient);
+    print("setCurrentPatientInfo : ${patient.name}");
+  }
+
   Future<void> disconnect(PatientInfo patient) async {
     await _userRepository.disconnect(accessToken, patient);
     await fetchPatients();
@@ -27,10 +32,17 @@ class TherapistMainViewModel extends StateNotifier<TherapistMainState> {
 
 class TherapistMainState {
   final List<PatientInfo> patients;
+  final PatientInfo? selectedPatient;
 
-  TherapistMainState({this.patients = const []});
+  TherapistMainState({this.patients = const [], this.selectedPatient});
 
-  TherapistMainState copyWith({List<PatientInfo>? patients}) {
-    return TherapistMainState(patients: patients ?? this.patients.toList());
+  TherapistMainState copyWith({
+    List<PatientInfo>? patients,
+    PatientInfo? selectedPatient,
+  }) {
+    return TherapistMainState(
+      patients: patients ?? this.patients.toList(),
+      selectedPatient: selectedPatient ?? this.selectedPatient,
+    );
   }
 }
